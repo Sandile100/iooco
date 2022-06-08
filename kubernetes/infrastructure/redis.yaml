@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-robot-secret
+type: Opaque
+data:
+  REDIS_ROOT_PASSWORD: cGFzc3dvcmQ= #password
+  REDIS_USER: cHJvY2Vzcw== #process
+  REDIS_PASSWORD: dGVzdDEyMw== #test123
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-robot-volumeclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-robot
+  labels:
+    app: redis-robot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-robot
+  template:
+    metadata:
+      labels:
+        app: redis-robot
+    spec:
+      containers:
+        - image: redis:6.2-alpine
+          name: redis-robot
+          env:
+            - name: REDIS_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-robot-secret
+                  key: REDIS_ROOT_PASSWORD
+            - name: REDIS_DATABASE
+              value: robot
+            - name: REDIS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: redis-robot-secret
+                  key: REDIS_USER
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-robot-secret
+                  key: REDIS_PASSWORD
+          ports:
+            - containerPort: 6379
+              name: redis-robot
+          volumeMounts:
+            - name: redis-robot-persistent-storage
+              mountPath: /var/lib/redis
+      volumes:
+        - name: redis-robot-persistent-storage
+          persistentVolumeClaim:
+            claimName: redis-robot-volumeclaim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-robot
+spec:
+  clusterIP: None
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis-robot
+  selector:
+    app: redis-robot

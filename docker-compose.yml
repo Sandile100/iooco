@@ -1,0 +1,95 @@
+version: '3.8'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=survivors
+    expose:
+      - 5432
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./db-data/:/var/lib/postgresql/data/
+    networks:
+      - robot-apocalypse-network
+    logging:
+      driver: json-file
+  redis:
+    container_name: redis
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes:
+      - ./db-data/:/var/lib/redis/data/
+    networks:
+      - robot-apocalypse-network
+    logging:
+      driver: json-file
+  survivor-ms:
+    container_name: survivor-ms
+    build:
+      context: survivor-ms
+      dockerfile: Dockerfile
+    image: survivor-ms:latest
+    expose:
+      - 9000
+    ports:
+      - "9000:9000"
+    networks:
+      - robot-apocalypse-network
+    depends_on:
+      - postgres
+      - redis
+    links:
+      - postgres:postgres
+      - redis:redis
+    logging:
+      driver: json-file
+  robot-ms:
+    container_name: robot-ms
+    build:
+      context: robot-ms
+      dockerfile: Dockerfile
+    image: robot-ms:latest
+    expose:
+      - 9001
+    ports:
+      - "9001:9001"
+    networks:
+      - robot-apocalypse-network
+    depends_on:
+      - redis
+      - survivor-ms
+    links:
+      - redis:redis
+      - survivor-ms:survivor-ms
+    logging:
+      driver: json-file
+  report-ms:
+    container_name: report-ms
+    build:
+      context: report-ms
+      dockerfile: Dockerfile
+    image: report-ms:latest
+    expose:
+      - 9002
+    ports:
+      - "9002:9002"
+    networks:
+      - robot-apocalypse-network
+    depends_on:
+      - postgres
+      - survivor-ms
+    links:
+      - postgres:postgres
+      - survivor-ms:survivor-ms
+    logging:
+      driver: json-file
+networks:
+  robot-apocalypse-network:

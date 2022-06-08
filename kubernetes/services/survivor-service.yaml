@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: survivor-ms
+  labels:
+    app: robot-apocalypse
+    tier: survivor-ms
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 9000
+  selector:
+    app: robot-apocalypse
+    tier: survivor-ms

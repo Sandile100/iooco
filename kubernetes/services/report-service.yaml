@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: report-ms
+  labels:
+    app: robot-apocalypse
+    tier: report-ms
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 9003
+  selector:
+    app: robot-apocalypse
+    tier: report-ms

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: robot-ms
+spec:
+  selector:
+    matchLabels:
+      app: robot-apocalypse
+      tier: robot-ms
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: robot-apocalypse
+        tier: robot-ms
+    spec:
+      containers:
+        - name: survivor-ms
+          image: sandilembatha/robot-apocalypse-robot-ms:latest
+          ports:
+            - containerPort: 9001
+          env:
+            - name: nextProcessStepUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: robot-config
+                  key: nextProcessStepUrl
+            - name: spring_datasource_url
+              value: jdbc:postgres://postgres-process/robot?verifyServerCertificate=false&useSSL=false&requireSSL=false
+            - name: spring.datasource.driver-class-name
+              value: com.postgres.jdbc.Driver
+            - name: spring_datasource_username
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-process-secret
+                  key: POSTGRESS_USER
+            - name: spring_datasource_password
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-process-secret
+                  key: POSTGRESS_PASSWORD

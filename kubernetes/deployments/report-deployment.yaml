@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-ms
+spec:
+  selector:
+    matchLabels:
+      app: robot-apocalypse
+      tier: report-ms
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: robot-apocalypse
+        tier: report-ms
+    spec:
+      containers:
+        - name: report-ms
+          image: sandilembatha/robot-apocalypse-report-ms:latest
+          ports:
+            - containerPort: 9002
+          env:
+            - name: nextProcessStepUrl
+              valueFrom:
+                configMapKeyRef:
+                  name: survivor-config
+                  key: nextProcessStepUrl
+            - name: spring_datasource_url
+              value: jdbc:postgres://postgres-process/report?verifyServerCertificate=false&useSSL=false&requireSSL=false
+            - name: spring.datasource.driver-class-name
+              value: com.postgres.jdbc.Driver
+            - name: spring_datasource_username
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-process-secret
+                  key: POSTGRESS_USER
+            - name: spring_datasource_password
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-process-secret
+                  key: POSTGRESS_PASSWORD
